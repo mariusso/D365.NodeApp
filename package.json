@@ -4,8 +4,7 @@
   "description": "",
   "main": "Execute.js",
   "scripts": {
-    "RegisterPlugins": "node Execute.js RegisterPlugins",
-    "CreateConfigFromD365": "node Execute.js CreateConfigFromD365"
+    "Execute": "node Execute.js"
   },
   "author": "Marius Solend",
   "license": "ISC",

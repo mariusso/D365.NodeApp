@@ -2,4 +2,3 @@ node_modules/
 .vscode/
 
 clientConfig.json
-configFromD365.json
