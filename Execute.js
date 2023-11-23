@@ -2,11 +2,6 @@
 
 const { AcquireTokenWithClientCredentials } = require("./AdalNode");
 const { BaseService } = require("./Services/BaseService");
-const pluginConfig = require("./pluginConfig.json");
-const fs = require('fs').promises;
-const clientConfig = require("./clientConfig.json");
-const path = require("path");
-
 
 async function EntryPoint() {
 
@@ -23,7 +18,7 @@ async function EntryPoint() {
             Execute();
         }
         else {
-            Console.error(`Unknown command: ${command}`);
+            console.error(`Unknown command: ${command}`);
         }
     }
 }
@@ -33,6 +28,10 @@ async function Execute() {
     const tokenResponse = await AcquireTokenWithClientCredentials();
 
     const baseService = new BaseService(tokenResponse, "accounts");
+
+    const result = await baseService.RetrieveMultiple("accountid", "statecode eq 0", "name asc", "5000");
+
+    console.log(result.length);
 }
 
 EntryPoint();

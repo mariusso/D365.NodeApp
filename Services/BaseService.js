@@ -2,38 +2,39 @@
 
 const url = require("url");
 const superagent = require("superagent");
-const { webApiurl } = require("../clientConfig.json");
+const { resource } = require("../clientConfig.json");
 
 exports.BaseService = class BaseService {
 
+    #requestHeaders = {
+        "Authorization": "Bearer ",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "OData-MaxVersion": "4.0",
+        "OData-Version": "4.0",
+        "If-None-Match": null,
+        "Prefer": "return=representation,odata.include-annotations=\"*\""
+    }
+
+    baseUrl;
+    entityUrl;
+
     constructor(tokenResponse, entitySetName) {
+        this.#requestHeaders.Authorization += tokenResponse.accessToken;
 
-        this.RequestHeaders = {
-            "Authorization": "Bearer " + tokenResponse.accessToken,
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-            "OData-MaxVersion": "4.0",
-            "OData-Version": "4.0",
-            "If-None-Match": null,
-            "Prefer": "return=representation,odata.include-annotations=\"*\""
-        };
-
-        this.WebApiUrl = webApiurl;
-        this.EntitySetName = entitySetName;
+        this.baseUrl = resource;
+        this.entityUrl = url.resolve(resource, `api/data/v9.2/${entitySetName}`);
     }
 
     async Create(entity) {
 
-        let response = undefined;
         try {
-            response = await superagent.post(url.resolve(this.WebApiUrl, this.EntitySetName)).set(this.RequestHeaders).send(entity);
+            const response = await superagent.post(this.entityUrl).set(this.#requestHeaders).send(entity);
+            return response.body;
         }
         catch (errorResponse) {
-            const message = errorResponse.response.body.error.message || errorResponse.message;
-            throw new Error(message);
+            throw new Error(error.response.body.Message);
         }
-
-        return response.body;
     }
 
     async Retrieve(id, select = "") {
@@ -44,18 +45,15 @@ exports.BaseService = class BaseService {
             select = `${operators.shift()}$select=${select}`;
         }
 
-        const address = encodeURI(`${url.resolve(this.WebApiUrl, this.EntitySetName)}(${id})${select}`);
+        const address = `${this.entityUrl}(${id})${select}`;
 
-        let response = undefined;
         try {
-            response = await superagent.get(address).set(this.RequestHeaders);
+            const response = await superagent.get(address).set(this.#requestHeaders);
+            return response.body;
         }
         catch (errorResponse) {
-            const message = errorResponse.response.body.error.message || errorResponse.message;
-            throw new Error(message);
+            throw new Error(error.response.body.Message);
         }
-
-        return response.body;
     }
 
     async RetrieveMultiple(select = "", filter = "", orderBy = "", top = "", expand = "") {
@@ -82,81 +80,70 @@ exports.BaseService = class BaseService {
             expand = `${operators.shift()}$expand=${encodeURIComponent(expand)}`;
         }
 
-        const address = `${url.resolve(this.WebApiUrl, this.EntitySetName)}${select}${filter}${orderBy}${top}`;
+        const address = `${this.entityUrl}${select}${filter}${orderBy}${top}`;
 
-        let response = undefined;
         try {
-            response = await superagent.get(address).set(this.RequestHeaders);
+            const response = await superagent.get(address).set(this.#requestHeaders);
+            return response.body.value;
         }
-        catch (errorResponse) {
-            const message = errorResponse.response.body.error.message || errorResponse.message;
-            throw new Error(message);
+        catch (error) {
+            throw new Error(error.response.body.Message);
         }
-
-        return response.body.value;
     }
 
     async Update(id, entity) {
 
-        const address = encodeURI(`${url.resolve(this.WebApiUrl, this.EntitySetName)}(${id})`);
+        const address = `${this.entityUrl}(${id})`;
 
-        let response = undefined;
         try {
-            response = await superagent.patch(address).set(this.RequestHeaders).send(entity);
+            const response = await superagent.patch(address).set(this.#requestHeaders).send(entity);
+            return response.body;
         }
         catch (errorResponse) {
-            const message = errorResponse.response.body.error.message || errorResponse.message;
-            throw new Error(message);
+            throw new Error(error.response.body.Message);
         }
-
-        return response.body;
     }
 
     async Delete(id) {
 
-        const address = encodeURI(`${url.resolve(this.WebApiUrl, this.EntitySetName)}(${id})`);
+        const address = `${this.entityUrl}(${id})`;
 
-        let response = undefined;
         try {
-            response = await superagent.del(address).set(this.RequestHeaders);
+            const response = await superagent.del(address).set(this.#requestHeaders);
+            return response.body;
         }
         catch (errorResponse) {
-            const message = errorResponse.response.body.error.message || errorResponse.message;
-            throw new Error(message);
+            throw new Error(error.response.body.Message);
         }
     }
 
     async ExecuteFetchXml(fetchXml) {
 
-        const address = `${url.resolve(this.WebApiUrl, this.EntitySetName)}?fetchXml=${encodeURI(fetchXml)}`;
+        const address = `${this.entityUrl}?fetchXml=${encodeURIComponent(fetchXml)}`;
 
-        let response = undefined;
         try {
-            response = await superagent.get(address).set(this.RequestHeaders);
+            const response = await superagent.get(address).set(this.#requestHeaders);
+            return response.body.value;
         }
         catch (errorResponse) {
-            const message = errorResponse.response.body.error.message || errorResponse.message;
-            throw new Error(message);
+            throw new Error(error.response.body.Message);
         }
-
-        return response.body.value;
     }
 
     async Associate(primaryEntityId, secondaryEntitySetName, secondaryEntityId, relationshipName)
     {
-        const address = `${url.resolve(this.WebApiUrl, this.EntitySetName)}(${primaryEntityId})/${relationshipName}/$ref`;
+        const address = `${this.entityUrl}(${primaryEntityId})/${relationshipName}/$ref`;
 
         const payload = {
-            "@odata.id": `${this.WebApiUrl}/${secondaryEntitySetName}(${secondaryEntityId})`
+            "@odata.id": `${this.baseUrl}/${secondaryEntitySetName}(${secondaryEntityId})`
         };
 
-        let response = undefined;
         try {
-            response = await superagent.post(address).set(this.RequestHeaders).send(payload);
+            const response = await superagent.post(address).set(this.#requestHeaders).send(payload);
+            return response.body;
         }
         catch (errorResponse) {
-            const message = errorResponse.response.body.error.message || errorResponse.message;
-            throw new Error(message);
+            throw new Error(error.response.body.Message);
         }
     }
 }
