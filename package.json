@@ -1,10 +1,10 @@
 {
-  "name": "d365.upsertplugins",
+  "name": "d365-nodeapp",
   "version": "1.0.0",
   "description": "",
-  "main": "Execute.js",
+  "main": "EntryPoint.js",
   "scripts": {
-    "Execute": "node Execute.js"
+    "start": "node EntryPoint.js"
   },
   "author": "Marius Solend",
   "license": "ISC",

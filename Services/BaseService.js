@@ -33,61 +33,34 @@ exports.BaseService = class BaseService {
             return response.body;
         }
         catch (errorResponse) {
-            throw new Error(error.response.body.Message);
+            throw new Error(error.response.body.Message || error.response.body.message);
         }
     }
 
-    async Retrieve(id, select = "") {
 
-        const operators = ["?"];
+    async Retrieve(id, options) {
 
-        if (select) {
-            select = `${operators.shift()}$select=${select}`;
-        }
-
-        const address = `${this.entityUrl}(${id})${select}`;
+        const address = `${this.entityUrl}(${id})${options.toString()}`;
 
         try {
             const response = await superagent.get(address).set(this.#requestHeaders);
             return response.body;
         }
         catch (errorResponse) {
-            throw new Error(error.response.body.Message);
+            throw new Error(error.response.body.Message || error.response.body.message);
         }
     }
 
-    async RetrieveMultiple(select = "", filter = "", orderBy = "", top = "", expand = "") {
+    async RetrieveMultiple(options) {
 
-        const operators = ["?", "&", "&", "&", "&"];
-
-        if (select) {
-            select = `${operators.shift()}$select=${encodeURIComponent(select)}`;
-        }
-
-        if (filter) {
-            filter = `${operators.shift()}$filter=${encodeURIComponent(filter)}`;
-        }
-
-        if (orderBy) {
-            orderBy = `${operators.shift()}$orderby=${encodeURIComponent(orderBy)}`;
-        }
-
-        if (top) {
-            top = `${operators.shift()}$top=${encodeURIComponent(top)}`;
-        }
-
-        if (expand) {
-            expand = `${operators.shift()}$expand=${encodeURIComponent(expand)}`;
-        }
-
-        const address = `${this.entityUrl}${select}${filter}${orderBy}${top}`;
+        const address = `${this.entityUrl}${options.toString()}`;
 
         try {
             const response = await superagent.get(address).set(this.#requestHeaders);
             return response.body.value;
         }
         catch (error) {
-            throw new Error(error.response.body.Message);
+            throw new Error(error.response.body.Message || error.response.body.message);
         }
     }
 
@@ -100,7 +73,7 @@ exports.BaseService = class BaseService {
             return response.body;
         }
         catch (errorResponse) {
-            throw new Error(error.response.body.Message);
+            throw new Error(error.response.body.Message || error.response.body.message);
         }
     }
 
@@ -113,7 +86,7 @@ exports.BaseService = class BaseService {
             return response.body;
         }
         catch (errorResponse) {
-            throw new Error(error.response.body.Message);
+            throw new Error(error.response.body.Message || error.response.body.message);
         }
     }
 
@@ -126,7 +99,7 @@ exports.BaseService = class BaseService {
             return response.body.value;
         }
         catch (errorResponse) {
-            throw new Error(error.response.body.Message);
+            throw new Error(error.response.body.Message || error.response.body.message);
         }
     }
 
@@ -143,7 +116,61 @@ exports.BaseService = class BaseService {
             return response.body;
         }
         catch (errorResponse) {
-            throw new Error(error.response.body.Message);
+            throw new Error(error.response.body.Message || error.response.body.message);
         }
+    }
+}
+
+exports.Options = class Options {
+
+    #expand;
+    #filter;
+    #orderBy;
+    #select;
+    #top;
+
+    toString = () => {
+
+        const operators = ["?", "&", "&", "&", "&"];
+
+        let str = "";
+
+        if (this.#expand) {
+            str += `${operators.shift()}$expand=${encodeURIComponent(this.#expand)}`;
+        }
+        if (this.#filter) {
+            str += `${operators.shift()}$filter=${encodeURIComponent(this.#filter)}`;
+        }
+        if (this.#orderBy) {
+            str += `${operators.shift()}$orderby=${encodeURIComponent(this.#orderBy)}`;
+        }
+        if (this.#select) {
+            str += `${operators.shift()}$select=${encodeURIComponent(this.#select)}`;
+        }
+        if (this.#top) {
+            str += `${operators.shift()}$top=${encodeURIComponent(this.#top)}`;
+        }
+
+        return str;
+    }
+    expand = (expand) => {
+        this.#expand = expand;
+        return this;
+    }
+    filter = (filter) => {
+        this.#filter = filter;
+        return this;
+    }
+    orderBy = (orderBy) => {
+        this.#orderBy = orderBy;
+        return this;
+    }
+    select = (select) => {
+        this.#select = select;
+        return this;
+    }
+    top = (top) => {
+        this.#top = top;
+        return this;
     }
 }
